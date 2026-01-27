@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: om-invoice-manager
+    env: python
+    buildCommand: pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --noinput
+    startCommand: python manage.py runserver 0.0.0.0:$PORT
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: om_invoice_manager.settings
+      - key: SECRET_KEY
+        value: your-secret-key-here
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        value: om-enterprises-invoice-management-1.onrender.com
