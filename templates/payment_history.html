@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main-content">
+    <h2>Payment History</h2>
+    <h4>Invoice: {{ invoice.invoice_number }}</h4>
+    <p><strong>Client:</strong> {{ invoice.project.client.name }}</p>
+    <p><strong>Project:</strong> {{ invoice.project.project_name }}</p>
+    <p><strong>Total Invoice Amount:</strong> ₹{{ invoice.certified_amount }}</p>
+    <p><strong>Total Paid (Filtered):</strong> ₹{{ total_amount_paid }}</p>
+    <p><strong>Number of Payments (Filtered):</strong> {{ total_payments }}</p>
+    <p><strong>Balance Remaining:</strong> ₹{{ balance_remaining }}</p>
+
+    <hr>
+
+    <!-- Date Filter Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Filter Payments by Date</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="end_date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">Filter</button>
+                    <a href="{% url 'payment_history' invoice.id %}" class="btn btn-secondary">Clear Filters</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <hr>
+
+    {% if payment_data %}
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>S.No</th>
+                    <th>Payment Date</th>
+                    <th>Amount Paid</th>
+                    <th>Payment Mode</th>
+                    <th>Running Total</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payment_data %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ payment.date|date:"d-m-Y" }}</td>
+                    <td>₹{{ payment.amount }}</td>
+                    
+                    <td>{{ payment.mode|title }}</td>
+                    <td>₹{{ payment.running_total }}</td>
+                    <td>{{ payment.notes|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-4">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-line"></i> Payment Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Total Payments:</strong><br>
+                                <span class="h4 text-primary">{{ total_payments }}</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Total Amount Paid:</strong><br>
+                                <span class="h4 text-success">₹{{ total_amount_paid }}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Invoice Amount:</strong><br>
+                                <span class="h5">₹{{ invoice.certified_amount }}</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Balance Remaining:</strong><br>
+                                <span class="h5 text-danger">₹{{ balance_remaining }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Payment Breakdown</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for payment in payment_data %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>{{ payment.date|date:"d-m-Y" }}</strong><br>
+                                <small class="text-muted">{{ payment.mode }}</small>
+                            </div>
+                            <div class="text-right">
+                                <span class="badge badge-success">₹{{ payment.amount }}</span><br>
+                                <small class="text-muted">Running: ₹{{ payment.running_total }}</small>
+                            </div>
+                        </div>
+                        {% if not forloop.last %}<hr class="my-2">{% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning">
+        <h5>No Payment Records Found</h5>
+        <p>This invoice has no payment history yet.</p>
+    </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{% url 'invoice_preview' invoice.id %}" class="btn btn-primary">
+            Back to Invoice Preview
+        </a>
+        <a href="{% url 'invoices' %}" class="btn btn-secondary">
+            Back to Invoices
+        </a>
+    </div>
+</div>
+{% endblock %}

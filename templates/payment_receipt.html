@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Payment Receipt</h2>
+        <a href="{% url 'invoices' %}" class="btn btn-secondary">Back to Invoices</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Payment Details</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Invoice Number:</strong></td>
+                            <td>{{ invoice.invoice_number }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Project:</strong></td>
+                            <td>{{ invoice.project.project_name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Client:</strong></td>
+                            <td>{{ invoice.project.client.name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Payment Date:</strong></td>
+                            <td>{{ payment_date|date:"d M Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Payment Amount:</strong></td>
+                            <td>₹{{ payment_amount }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Payment Mode:</strong></td>
+                            <td>{{ invoice.payment_mode|title }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5>Invoice Summary</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Contract Amount:</strong></td>
+                            <td>₹{{ invoice.contract_amount }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>GST ({{ gst_percent }}%):</strong></td>
+                            <td>₹{{ gst_amount }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Certified Amount:</strong></td>
+                            <td>₹{{ certified_amount }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Amount:</strong></td>
+                            <td>₹{{ grand_total }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Previous Payments:</strong></td>
+                            <td>₹{{ previous_payments }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Balance Due:</strong></td>
+                            <td>₹{{ balance_due }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="text-center">
+                <h4>Payment Received Successfully</h4>
+                <p class="text-muted">Thank you for your payment. This receipt serves as confirmation of the transaction.</p>
+            </div>
+
+            <div class="text-center mt-4">
+                <button onclick="window.print()" class="btn btn-primary">Print Receipt</button>
+                <a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-secondary">View Invoice PDF</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn, .card-header, .d-flex {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .card-body {
+        padding: 0 !important;
+    }
+}
+</style>
+{% endblock %}

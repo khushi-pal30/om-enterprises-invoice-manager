@@ -1,0 +1,36 @@
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+from django.conf import settings
+from .utils import generate_gst_invoice
+
+def send_invoice_email(invoice, recipient_email):
+    # Generate the PDF
+    pdf_path = generate_gst_invoice(invoice)
+
+    # Email setup
+    msg = MIMEMultipart()
+    msg['From'] = settings.EMAIL_HOST_USER
+    msg['To'] = recipient_email
+    msg['Subject'] = f"Invoice {invoice.invoice_no} from OM Enterprises"
+
+    body = f"Please find attached the invoice {invoice.invoice_no}."
+    msg.attach(MIMEText(body, 'plain'))
+
+    # Attach PDF
+    with open(pdf_path, 'rb') as attachment:
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload(attachment.read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', f"attachment; filename= OM_Invoice_{invoice.invoice_no}.pdf")
+        msg.attach(part)
+
+    # Send email
+    server = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
+    server.starttls()
+    server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+    text = msg.as_string()
+    server.sendmail(settings.EMAIL_HOST_USER, recipient_email, text)
+    server.quit()

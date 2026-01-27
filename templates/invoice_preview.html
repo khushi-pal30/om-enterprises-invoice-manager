@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="main-content">
+<h2>OM Enterprises</h2>
+<hr>
+
+<h3>Invoice Preview</h3>
+<hr>
+
+<div class="card p-4 shadow-sm">
+    <p><strong>Invoice No:</strong> {{ invoice.invoice_number }}</p>
+    <p><strong>Date:</strong> {{ invoice.invoice_date }}</p>
+    {% if invoice.due_date %}
+    <p><strong>Due Date:</strong> {{ invoice.due_date }}</p>
+    {% endif %}
+    <p><strong>Client:</strong> {{ invoice.project.client.name }}</p>
+    <p><strong>Project:</strong> {{ invoice.project.project_name }}</p>
+
+    <p><strong>RA Bill No:</strong> {{ invoice.ra_bill_no }}</p>
+    <p><strong>Contract Amount:</strong> ₹{{ invoice.contract_amount }}</p>
+
+    <hr>
+
+    <table class="table">
+        <tr>
+            <th>Description</th>
+            <th>Amount</th>
+        </tr>
+        <tr>
+            <td>Certified Amount</td>
+            <td>₹{{ invoice.certified_amount }}</td>
+        </tr>
+        <tr>
+            <td>GST ({{ gst_percent }}%)</td>
+            <td>₹{{ invoice.total_tax_amount }}</td>
+        </tr>
+        <tr>
+            <td>TDS</td>
+            <td>₹{{ invoice.tds_amount }}</td>
+        </tr>
+        <tr>
+            <td>Retention Amount</td>
+            <td>₹{{ invoice.retention_amount }}</td>
+        </tr>
+        
+        <tr>
+            <td><strong>Grand Total</strong></td>
+            <td><strong>₹{{ grand_total }}</strong></td>
+        </tr>
+        <tr>
+            <td>Paid Amount</td>
+            <td>₹{{ invoice.paid_amount }}</td>
+        </tr>
+        
+        <tr>
+            <td><strong>Balance Due</strong></td>
+            <td><strong>₹{{ balance}}</strong></td>
+        </tr>
+    </table>
+
+    <div class="mt-4">
+        <a href="{% url 'send_invoice' invoice.id %}" class="btn btn-success">
+            <i class="fas fa-user-friends"></i>Send Invoice
+        </a>
+
+        <a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-secondary">
+            <i class="fas fa-download"></i>Download PDF
+        </a>
+
+        
+        <a href="{% url 'invoices' %}" class="btn btn-secondary">
+           <i class="fas fa-backward-step"></i> Back to Invoices
+        </a>
+        <a href="/" class="btn btn-dark">
+           <i class="fas fa-backward-step"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+</div>
+{% endblock %}

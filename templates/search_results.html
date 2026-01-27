@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="main-content">
+    <h3 class="mb-4">Search Results</h3>
+
+    {% if query %}
+        <p class="text-muted">Showing results for: "<strong>{{ query }}</strong>"</p>
+        <p class="text-muted">Total results: {{ total_results }}</p>
+    {% else %}
+        <div class="alert alert-info">
+            <strong>No search query provided.</strong> Please enter a search term.
+        </div>
+    {% endif %}
+
+    {% if clients %}
+    <div class="mb-4">
+        <h4 class="text-primary">Clients ({{ clients|length }})</h4>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for client in clients %}
+                    <tr>
+                        <td>{{ client.name }}</td>
+                        <td>{{ client.email }}</td>
+                        <td>{{ client.phone }}</td>
+                        <td>{{ client.address|truncatechars:50 }}</td>
+                        <td>
+                            <a href="{% url 'clients' %}" class="btn btn-sm btn-primary">View Details</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if projects %}
+    <div class="mb-4">
+        <h4 class="text-success">Projects ({{ projects|length }})</h4>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Project Name</th>
+                        <th>Client</th>
+                        <th>Status</th>
+                        <th>Contract Amount</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for project in projects %}
+                    <tr>
+                        <td>{{ project.project_name }}</td>
+                        <td>{{ project.client.name }}</td>
+                        <td>
+                            <span class="badge bg-{% if project.status == 'Active' %}success{% elif project.status == 'Completed' %}primary{% else %}warning{% endif %}">
+                                {{ project.status }}
+                            </span>
+                        </td>
+                        <td>₹{{ project.contract_amount }}</td>
+                        <td>
+                            <a href="{% url 'projects' %}" class="btn btn-sm btn-success">View Details</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if invoices %}
+    <div class="mb-4">
+        <h4 class="text-warning">Invoices ({{ invoices|length }})</h4>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Invoice Number</th>
+                        <th>Project</th>
+                        <th>Client</th>
+                        <th>Certified Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for invoice in invoices %}
+                    <tr>
+                        <td>{{ invoice.invoice_number }}</td>
+                        <td>{{ invoice.project.project_name }}</td>
+                        <td>{{ invoice.project.client.name }}</td>
+                        <td>₹{{ invoice.certified_amount }}</td>
+                        <td>
+                            <span class="badge bg-{% if invoice.status == 'Paid' %}success{% else %}warning{% endif %}">
+                                {{ invoice.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'invoices' %}" class="btn btn-sm btn-warning">View Details</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not clients and not projects and not invoices and query %}
+    <div class="alert alert-warning">
+        <strong>No results found.</strong> Try a different search term.
+    </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

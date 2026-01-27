@@ -1,0 +1,110 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Om Enterprises</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'dashbord/style.css' %}">
+</head>
+<body>
+
+<!-- ================= Sidebar ================= -->
+<div class="sidebar d-none d-md-block">
+    <h2>OM <span>Enterprises</span></h2>
+
+    <a href="/" class="menu-item">
+        <span class="icon-box bg-primary">
+            <i class="fa-solid fa-grip"></i>
+        </span>
+        Dashboard
+    </a>
+    <a href="{% url 'clients' %}" class="menu-item">
+        <span class="icon-box bg-info">
+            <i class="fa-solid fa-users"></i>
+        </span>
+        Clients
+    </a>
+    <a href="{% url 'projects' %}" class="menu-item">
+        <span class="icon-box bg-success">
+            <i class="fa-solid fa-list-check"></i>
+        </span>
+        Projects
+    </a>
+
+    <a href="{% url 'invoices' %}" class="menu-item">
+        <span class="icon-box bg-warning">
+            <i class="fa-solid fa-file-invoice"></i>
+        </span>
+        Invoices
+    </a>
+
+
+    <a href="{% url 'settings' %}" class="menu-item">
+        <span class="icon-box bg-secondary">
+            <i class="fa-solid fa-gear"></i>
+        </span>
+        Settings
+    </a>
+</div>
+
+<!-- ================= Mobile Navbar ================= -->
+<nav class="navbar navbar-expand-md navbar-dark bg-dark d-md-none">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">OM Enterprises</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'clients' %}">Clients</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'projects' %}">Projects</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'invoices' %}">Invoices</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'settings' %}">Settings</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- ================= Page Content ================= -->
+<div class="content">
+    {% block content %}
+    {% endblock %}
+</div>
+
+<!-- ================= Messages ================= -->
+{% if messages %}
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} shadow-sm">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+

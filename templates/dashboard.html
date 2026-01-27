@@ -1,0 +1,256 @@
+
+{% extends "base.html" %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'dashbord/style.css' %}">
+
+{% block content %}
+<div class="main-content">
+    <!-- Dashboard Header with Search -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">Dashboard</h3>
+        <div class="d-flex align-items-center">
+            <!-- Global Search Form -->
+            <form method="get" action="{% url 'global_search' %}" class="d-flex me-3">
+                <input type="text" name="q" class="form-control form-control-sm" placeholder="Search projects, invoices, clients..." style="width: 300px;">
+                <button type="submit" class="btn btn-outline-primary btn-sm ms-2">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+
+            <!-- User Info and Logout -->
+            {% if user.is_authenticated %}
+                {% if user.is_superuser %}
+                    <span class="badge bg-danger me-2">Admin</span>
+                {% else %}
+                    <span class="badge bg-secondary me-2">User</span>
+                {% endif %}
+                <span class="me-2">{{ user.username }}</span>
+                <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-dark ms-2">
+                        Logout
+                    </button>
+                </form>
+            {% else %}
+                <a href="/admin/login/" class="btn btn-sm btn-primary">Login</a>
+            {% endif %}
+        </div>
+    </div>
+
+<!-- Cards Section -->
+<div class="row g-3 mb-4">
+
+    <!-- Total Contract -->
+    <div class="col-md-3">
+        <div class="card-box bg-blue text-white p-3 rounded shadow-sm position-relative">
+            <i class="fas fa-file-invoice fa-2x card-icon"></i>
+
+            <small>Total Contract Value</small>
+            <h4>₹{{ total_contract }}</h4>
+
+            {% if total_contract %}
+            <div class="progress mt-2" style="height: 6px;">
+                <div class="progress-bar bg-light"
+                     style="width: {{ paid_percentage|floatformat:0 }}%">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Paid Amount -->
+    <div class="col-md-3">
+        <div class="card-box bg-purple text-white p-3 rounded shadow-sm position-relative">
+            <i class="fas fa-circle-check fa-2x card-icon"></i>
+
+            <small>Paid Amount</small>
+            <h4>₹{{ paid_amount }}</h4>
+        </div>
+    </div>
+
+    <!-- Pending Amount -->
+    <div class="col-md-3">
+        <div class="card-box bg-red text-white p-3 rounded shadow-sm position-relative">
+            <i class="fas fa-hourglass-half fa-2x card-icon"></i>
+
+            <small>Pending Amount</small>
+            <h4>₹{{ pending_amount }}</h4>
+        </div>
+    </div>
+
+    <!-- Net Profit -->
+    <div class="col-md-3">
+        <div class="card-box bg-green text-white p-3 rounded shadow-sm position-relative">
+            <i class="fas fa-chart-line fa-2x card-icon"></i>
+
+            <small>Net Profit</small>
+            <h4>₹{{ net_profit|default:"0" }}</h4>
+        </div>
+    </div>
+
+</div>
+
+
+    
+    
+
+<hr class="my-4">
+
+<!-- Charts Section -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h5>Payments Overview</h5>
+        <canvas id="paymentsChart"></canvas>
+    </div>
+    <div class="col-md-6">
+        <h5>Monthly Sales</h5>
+        <canvas id="monthlySalesChart"></canvas>
+    </div>
+</div>
+
+<!-- Quick Action Buttons -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <a href="{% url 'add_client' %}" class="btn btn-secondary w-100 {% if not user.is_superuser %}disabled{% endif %}"><i class="fas fa-plus"></i>Add Client</a>
+    </div>
+    <div class="col-md-2">
+        <a href="{% url 'add_project' %}" class="btn btn-primary w-100 {% if not user.is_superuser %}disabled{% endif %}"><i class="fas fa-plus"></i>Add Project</a>
+    </div>
+    <div class="col-md-2">
+        <a href="{% url 'add_invoice' %}" class="btn btn-success w-100 {% if not user.is_superuser %}disabled{% endif %}"><i class="fas fa-plus"></i>Add Invoice</a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'view_reports' %}" class="btn btn-info w-100 mb-2"><i class="fas fa-users-viewfinder"></i>View Reports</a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'export_data' %}" class="btn btn-warning w-100 mb-2"><i class="fas fa-file-export"></i>Export Data</a>
+    </div>
+    <div class="col-md-3">
+        <button type="button" class="btn btn-danger w-100 mb-2" data-bs-toggle="modal" data-bs-target="#resetModal">
+            <i class="fas fa-refresh"></i>Reset All Data
+        </button>
+    </div>
+</div>
+
+<!-- Project-wise Pending Breakdown -->
+<form method="get" class="mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Project-wise Pending Breakdown</h4>
+        <div>
+            <label for="financial_year" class="form-label me-2">Financial Year</label>
+            <select name="financial_year" id="financial_year" class="form-select" onchange="this.form.submit()">
+                <option value="">All Financial Years</option>
+                {% for fy in financial_years %}
+                <option value="{{ fy }}" {% if fy == financial_year %}selected{% endif %}>{{ fy }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    
+</form>
+
+<!-- Projects Breakdown Table -->
+<table class="table table-striped table-bordered mt-3">
+    <thead class="table-dark">
+        <tr>
+            <th>Project Name</th>
+            <th>Client</th>
+            <th>Paid (₹)</th>
+            <th>Pending (₹)</th>
+            <th>Balance Due (₹)</th>
+            <th>Inv ID</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for item in projects_breakdown %}
+        <tr>
+            <td>{{ item.project_name }}</td>
+            <td>{{ item.client_name }}</td>
+            <td>₹{{ item.paid }}</td>
+            <td>₹{{ item.pending }}</td>
+            <td>₹{{ item.balance_due }}</td>
+            <td>{{ item.inv_id }}</td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td colspan="6" class="text-center">No projects found</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<!-- Chart.js Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Payments Chart (Doughnut)
+    const ctxPayments = document.getElementById('paymentsChart').getContext('2d');
+    new Chart(ctxPayments, {
+        type: 'doughnut',
+        data: {
+            labels: ['Paid', 'Pending'],
+            datasets: [{
+                data: [{{ paid_amount }}, {{ pending_amount }}],
+                backgroundColor: ['#28a745','#ffc107']
+            }]
+        }
+    });
+    
+    // Monthly Sales Chart (Line)
+    const ctxMonthly = document.getElementById('monthlySalesChart').getContext('2d');
+    new Chart(ctxMonthly, {
+        type: 'line',
+        data: {
+            labels: [
+                {% for month in months %}
+                    '{{ month }}'{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Monthly Sales',
+                data: [
+                    {% for value in monthly_sales %}
+                        {{ value }}{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 2,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+</script>
+
+<!-- Reset Data Modal -->
+<div class="modal fade" id="resetModal" tabindex="-1" aria-labelledby="resetModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="resetModalLabel">Confirm Data Reset</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to reset all data? This will permanently delete all invoices, projects, clients, and company settings. This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form method="post" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" name="reset_data" class="btn btn-danger">Yes, Reset All Data</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+</div>
+{% endblock %}
+
+
+
+

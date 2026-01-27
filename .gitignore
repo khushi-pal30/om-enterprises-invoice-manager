@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Django
+db.sqlite3
+media/
+
+# Env
+.env
+
+# Static collected files
+staticfiles/

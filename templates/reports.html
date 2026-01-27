@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="main-content">
+    <h2 class="mb-4">Reports</h2>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5>Total Clients</h5>
+                    <h3>{{ total_clients }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5>Total Projects</h5>
+                    <h3>{{ total_projects }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5>Total Invoices</h5>
+                    <h3>{{ total_invoices }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5>Total Contract Value</h5>
+                    <h3>₹{{ total_contract_value }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5>Total Invoiced Amount</h5>
+                    <h3>₹{{ total_invoiced_amount }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5>Received Amount</h5>
+                    <h3>₹{{ received_amount }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5>Due Amount</h5>
+                    <h3>₹{{ due_amount }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5>Overdue Amount</h5>
+                    <h3 class="text-danger">₹{{ overdue_amount }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p class="mt-4">More detailed reports can be added here in the future.</p>
+</div>
+{% endblock %}
