@@ -224,10 +224,10 @@
                             </td>
                             
                             <td>
-                                <div>₹{{ invoice.total_received }}</div>
+                                <div>₹{{ invoice.total_received_calc }}</div>
                                 <small class="text-muted d-block">
-                               Retention: ₹{{  invoice.retention_amount }}
-                            {% if  invoice.retention_amount > 0 %}
+                               Retention: ₹{{  invoice.retention_amount_calc }}
+                            {% if  invoice.retention_amount_calc > 0 %}
                                 {% if invoice.retention_released %}
                               <span class="badge bg-success ms-1">Released</span>
                               {% else %}

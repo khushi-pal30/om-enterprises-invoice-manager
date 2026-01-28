@@ -203,13 +203,13 @@ class Invoice(models.Model):
     @property
     def certified_amount(self):
         """
-        Net Amount = Contract Amount + GST - other_deductions
-        Retention is not deducted here as it's always part of balance due
+        Net Amount = Contract Amount + GST - other_deductions - retention (if not released)
         """
 
         certified = self.contract_amount + self.total_tax_amount - self.other_deductions
-        # deductions
-        certified -= self.other_deductions
+
+        if not self.retention_released:
+            certified -= self.retention_amount
 
         if certified < 0:
             certified = Decimal('0')
@@ -241,13 +241,9 @@ class Invoice(models.Model):
     @property
     def total_received(self):
         """
-        Total amount received = paid_amount - tds_amount +/- retention_amount based on release status
+        Total amount received = paid_amount - tds_amount
         """
         received = self.paid_amount - self.tds_amount
-        if self.retention_released:
-            received += self.retention_amount
-        else:
-            received -= self.retention_amount
         return two_dec(received)
 
     # =====================================================

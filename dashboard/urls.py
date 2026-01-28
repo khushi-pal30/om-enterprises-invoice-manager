@@ -2,6 +2,8 @@
 from django.urls import path
 from django.contrib.auth.views import LogoutView
 from .views import (
+    home_view,
+    login_view,
     clients_page,
     dashboard_view,
     pay_retention,
@@ -32,7 +34,8 @@ from .views import (
 )
 
 urlpatterns = [
-    path('', dashboard_view, name='dashboard'),
+    path('', home_view, name='home'),
+    path('dashboard/', dashboard_view, name='dashboard'),
 
     path('send_invoice/<int:invoice_id>/', send_invoice, name='send_invoice'),
     path('invoice/paid/<int:invoice_id>/', mark_invoice_paid, name='mark_paid'),
@@ -62,7 +65,8 @@ urlpatterns = [
     path('clients/delete/<int:client_id>/', delete_client, name='delete_client'),
     path('settings/', settings, name='settings'),
 
-    path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
+    path('login/', login_view, name='login'),
+    path('logout/', LogoutView.as_view(next_page='/login/'), name='logout'),
     path('projects/<int:pk>/', project_detail, name='project_detail'),
     path('verify-tds/<int:invoice_id>/', verify_tds, name='verify_tds'),
     path('search/', global_search, name='global_search'),

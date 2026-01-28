@@ -14,17 +14,41 @@ from .forms import ProjectForm, InvoiceForm, CompanySettingsForm, AdminPasswordC
 from .utils import generate_gst_invoice
 from .email_service import send_invoice_email
 from .whatsapp_service import send_whatsapp_invoice
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import update_session_auth_hash, authenticate, login
 from django.db.models import F, Sum
 from decimal import Decimal, ROUND_HALF_UP
+
+# -------------------------
+# HOME VIEW
+# -------------------------
+def home_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    else:
+        return redirect('login')
+
+# -------------------------
+# LOGIN
+# -------------------------
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        from django.contrib.auth.models import User
+        user, created = User.objects.get_or_create(username=username, defaults={'password': password})
+        if created:
+            user.set_password(password)
+            user.save()
+            messages.success(request, 'New user registered successfully!')
+        login(request, user)
+        return redirect('dashboard')
+    return render(request, 'login.html')
 
 # -------------------------
 # DASHBOARD
 # -------------------------
 @login_required
 def dashboard_view(request):
-    if not request.user.is_superuser:
-        return redirect('/admin/login/')
 
     if request.method == 'POST' and 'reset_data' in request.POST:
         # Handle data reset
@@ -50,7 +74,7 @@ def dashboard_view(request):
 
     # Total Balance Due
     total_balance_due = sum(
-        inv.certified_amount - inv.total_received - inv.tds_amount
+        inv.certified_amount - inv.paid_amount
         for inv in Invoice.objects.all()
     )
 
@@ -90,7 +114,7 @@ def dashboard_view(request):
 
         paid_total = sum(inv.certified_amount for inv in paid_invoices)
         pending_total = sum(inv.certified_amount for inv in pending_invoices)
-        balance_due_total = sum(inv.certified_amount - inv.total_received - inv.tds_amount for inv in invoices  )
+        balance_due_total = sum(inv.certified_amount - inv.paid_amount  for inv in invoices  )
 
         latest_invoice = invoices.order_by('-id').first()
         inv_id = latest_invoice.invoice_number if latest_invoice else 'N/A'
@@ -152,9 +176,6 @@ def add_project(request):
 # -------------------------
 @login_required
 def add_client(request):
-    if not request.user.is_superuser:
-        return redirect('/admin/login/')
-
     clients = Client.objects.all()
 
     if request.method == "POST":
@@ -178,9 +199,6 @@ def add_client(request):
 # -------------------------
 @login_required
 def edit_client(request, client_id):
-    if not request.user.is_superuser:
-        return redirect('/admin/login/')
-
     client = get_object_or_404(Client, id=client_id)
 
     if request.method == "POST":
@@ -202,9 +220,6 @@ def edit_client(request, client_id):
 # -------------------------
 @login_required
 def delete_client(request, client_id):
-    if not request.user.is_superuser:
-        return redirect('/admin/login/')
-
     client = get_object_or_404(Client, id=client_id)
 
     if request.method == 'POST':
@@ -346,22 +361,22 @@ def invoices(request):
             output_field=DecimalField(max_digits=14, decimal_places=4)
         ),
         retention_amount_calc=Case(
-            When(retention_type='percent', then=F('contract_amount') * F('retention_percent') / 100),
+            When(retention_type='percent', then=ExpressionWrapper(F('contract_amount') * F('retention_percent') / 100, output_field=DecimalField(max_digits=14, decimal_places=4))),
             When(retention_type='amount', then=F('retention_fixed_amount')),
-            default=0,
+            default=Value(0, output_field=DecimalField(max_digits=14, decimal_places=4)),
             output_field=DecimalField(max_digits=14, decimal_places=4)
         ),
         certified_amount_calc=ExpressionWrapper(
                 F('contract_amount')
-            + (F('contract_amount') * (F('cgst_percent') + F('sgst_percent')) / 100) - F('other_deductions'),
+            + (F('contract_amount') * (F('cgst_percent') + F('sgst_percent')) / 100) + F('other_deductions'),
             output_field=DecimalField(max_digits=14, decimal_places=4)
         ),
-        total_received_calc=ExpressionWrapper(
-            F('paid_amount') - F('tds_amount') + F('retention_amount_calc') * (2 * F('retention_released') - 1),
+        total_received_calc= ExpressionWrapper(
+          F('paid_amount') - F('tds_amount'),
             output_field=DecimalField(max_digits=14, decimal_places=4)
         ),
         balance_due_calc=ExpressionWrapper(
-            F('certified_amount_calc') - F('total_received_calc')-F('tds_amount'),
+            F('certified_amount_calc') - F('paid_amount'),
             output_field=DecimalField(max_digits=14, decimal_places=4)
         ),
         total_tax_amount_calc=ExpressionWrapper(
@@ -524,7 +539,7 @@ def download_invoice_pdf(request, invoice_id):
     template = get_template('invoice_pdf.html')
     gst_percent = invoice.cgst_percent + invoice.sgst_percent
     grand_total = round(invoice.certified_amount + invoice.total_tax_amount, 2)
-    balance_due = round(invoice.certified_amount - invoice.total_received- invoice.tds_amount, 2)
+    balance_due = round(invoice.certified_amount - invoice.paid_amount, 2)
     html = template.render({
         'invoice': invoice,
         'cgst_amount': round(invoice.cgst_amount, 2),
@@ -709,7 +724,7 @@ def view_reports(request):
     )['total'] or 0
 
     # Due amount (total invoiced - received)
-    due_amount = total_invoiced_amount - received_amount - tds_amount
+    due_amount = total_invoiced_amount - received_amount 
 
     context = {
         'total_clients': total_clients,
@@ -728,7 +743,7 @@ def invoice_preview(request, invoice_id):
     invoice = get_object_or_404(Invoice, id=invoice_id)
     gst_amount = round(invoice.total_tax_amount, 2)
     grand_total = round(invoice.certified_amount + invoice.total_tax_amount, 2)
-    balance = round(invoice.certified_amount - invoice.paid_amount-invoice.tds_amount, 2)
+    balance = round(invoice.certified_amount - invoice.paid_amount, 2)
     certified_amount = round(invoice.certified_amount, 2)
     gst_percent = invoice.cgst_percent + invoice.sgst_percent
     total_received = round(invoice.total_received, 2)
@@ -753,7 +768,7 @@ def payment_receipt(request, invoice_id):
 
     gst_amount = round(invoice.total_tax_amount, 2)
     grand_total = round(invoice.certified_amount + invoice.total_tax_amount, 2)
-    balance_due = round(invoice.certified_amount - invoice.total_received -invoice.tds_amount, 2)
+    balance_due = round(invoice.certified_amount - invoice.paid_amount, 2)
 
     # Calculate previous payments (total paid minus current payment)
     previous_payments = round(invoice.paid_amount - payment_amount, 2)
@@ -784,11 +799,11 @@ def project_detail(request, pk):
             output_field=DecimalField(max_digits=14, decimal_places=4)
         ),
         total_received_calc=ExpressionWrapper(
-           F('paid_amount') - F('tds_amount') + F('retention_amount_calc') * (2 * F('retention_released') - 1),
+           F('paid_amount'),
             output_field=DecimalField(max_digits=14, decimal_places=4)
         ),
         balance_due_calc=ExpressionWrapper(
-            F('certified_amount_calc') - F('total_received_calc')-F('tds_amount'),
+            F('certified_amount_calc') - F('paid_amount'),
             output_field=DecimalField(max_digits=14, decimal_places=4)
         ),
     ).order_by('invoice_date')
@@ -867,7 +882,7 @@ def payment_history(request, invoice_id):
             })
 
     # Calculate correct balance remaining (always based on full invoice)
-    balance_remaining = invoice.certified_amount - invoice.total_received- invoice.tds_amount
+    balance_remaining = invoice.certified_amount - invoice.paid_amount
 
     context = {
         'invoice': invoice,
